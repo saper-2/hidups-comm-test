@@ -274,16 +274,24 @@ namespace UPSCommTest
         {
             HidDevice dev = null;
             string replay = "";
+            byte[] cmdbyte;
 
-            if (cmd.Length > 7)
+            /*if (cmd.Length > 7)
             {
                 alog("Command: `" + cmd + "` too long(" + cmd.Length.ToString() + ")!");
                 return "";
-            }
+            }*/
 
-            alog("QueryUPS: «" + cmd + "» ...");
+            cmd = cmd.Trim();
+            cmd += "\x0d";
 
-                DeviceList deviceList = DeviceList.Local;
+            cmdbyte = Encoding.ASCII.GetBytes(cmd);// new byte[cmd.Length + 1];
+
+            
+            if (cbHexDumps.Checked) alog("QueryUPS: «" + cmd + "» : " + ByteArrrayDump(cmdbyte));
+                else alog("QueryUPS: «" + cmd + "» ...");
+
+            DeviceList deviceList = DeviceList.Local;
 
             List<HidDevice> dlist = deviceList.GetHidDevices().ToList();
             foreach (HidDevice dv in dlist)
@@ -328,28 +336,42 @@ namespace UPSCommTest
                         byte[] outRepBuff = new byte[dev.GetMaxOutputReportLength()];
 
 
-                        byte[] cmdar = Encoding.ASCII.GetBytes(cmd);
-                        if (cmdar.Length > (outRepBuff.Length-2))
-                        {
-                            alog("Command too long(" + cmdar.Length.ToString() + "), won't fit into buffer(" + outRepBuff.Length.ToString() + "-2)!");
-                            return "";
-                        }
+                        //byte[] cmdar = Encoding.ASCII.GetBytes(cmd);
+                        //if (cmdar.Length > (outRepBuff.Length-2))
+                        //{
+                        //    alog("Command too long(" + cmdar.Length.ToString() + "), won't fit into buffer(" + outRepBuff.Length.ToString() + "-2)!");
+                        //    return "";
+                        //}
 
                         outRepBuff[0] = 0x00;
-                        int j=0;
-                        for (j = 0; j < cmdar.Length; j++)
+                        int i = 0, j = 0;
+                        for (j = 0,i=1; j < cmdbyte.Length; j++,i++)
                         {
                             
-                            outRepBuff[j+1] = cmdar[j];
+                            outRepBuff[i] = cmdbyte[j]; // from byte1
+                            if (i >= (outRepBuff.Length-1))
+                            {
+                                // send
+                                //outRepBuff[++j] = 0x0d;
+                                if (cbHexDumps.Checked) alog("Sending data chunk["+(i-(outRepBuff.Length-1)).ToString()+".." + i.ToString()+"]: " + ByteArrrayDump(outRepBuff));
+
+                                // DEBUG: no send.
+                                hs.Write(outRepBuff, 0, outRepBuff.Length);
+                                if (cbHexDumps.Checked) alog("Sent.");
+                                // zero buffer
+                                for (int k = 0; k < outRepBuff.Length; k++) outRepBuff[k] = 0;
+                                i = 0; // reset i to 1, going throught "for" will i++ .
+                            }
                         }
-                        //outRepBuff[1] = 0x51;
-                        //outRepBuff[2] = 0x53;
-                        outRepBuff[++j] = 0x0d;
-                        if (cbHexDumps.Checked) alog("Sending data: " + ByteArrrayDump(outRepBuff));
+                        //outRepBuff[++j] = 0x0d;
+                        if (i > 1)
+                        {
+                            if (cbHexDumps.Checked) alog("Sending data: " + ByteArrrayDump(outRepBuff));
 
-                        hs.Write(outRepBuff, 0, outRepBuff.Length);
-                        if (cbHexDumps.Checked) alog("Sent.");
-
+                            //DEBUG: no send.
+                            hs.Write(outRepBuff, 0, outRepBuff.Length);
+                            if (cbHexDumps.Checked) alog("Sent.");
+                        }
                         inpRecv.Start(hs);
 
                         List<HidSharp.Reports.Report> respRep = new List<HidSharp.Reports.Report>();
@@ -369,7 +391,7 @@ namespace UPSCommTest
                                 {
                                     if (cbHexDumps.Checked) alog("Got report: " + ByteArrrayDump(inRepBuff));
 
-                                    replay += ByteArrayToString(inRepBuff);
+                                    replay += ByteArrayToString(inRepBuff,ControlRemove: true);
                                     //respRep.Add(rep);
                                 }
                             }
@@ -401,109 +423,21 @@ namespace UPSCommTest
         {
             string cmd = "QS";
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
-            /*
-            HidDevice dev = null;
-
-            DeviceList deviceList = DeviceList.Local;
-
-            List<HidDevice> dlist = deviceList.GetHidDevices().ToList();
-            foreach (HidDevice dv in dlist)
-            {
-                //alog(" - `" + dv.GetFriendlyName() + "` V=" + dv.VendorID.ToString("X4") + " P=" + dv.ProductID.ToString("X4") + " : " + dv.DevicePath);
-                if (dv.DevicePath == cbDevices.Text)
-                {
-                    dev = dv;
-                    break;
-                }
-            }
-
-            if (dev == null) return;
-            // now we got right dev, print some info and let's try to send some query to UPS...
-            alog("++++++++++++++++++++++++++++++++++++++++++++++++++++");
-            alog("Selected device: " + dev.DevicePath);
-            alog("Manufacturer: " + dev.GetManufacturer());
-            alog("Product name:" + dev.GetProductName());
-            alog("S/N: " + dev.GetSerialNumber());
-            
-            HidSharp.Reports.ReportDescriptor rpDesc = dev.GetReportDescriptor();
-
-            if (rpDesc.DeviceItems.Count > 0) {
-                HidSharp.Reports.DeviceItem devit = rpDesc.DeviceItems[0];
-
-                HidStream hs;
-                if (dev.TryOpen(out hs))
-                {
-                    alog("Opened!");
-                    using (hs)
-                    {
-                        byte[] inRepBuff = new byte[dev.GetMaxInputReportLength()];
-                        var inpRecv = rpDesc.CreateHidDeviceInputReceiver();
-                        var inpParser = devit.CreateDeviceItemInputParser();
-                        byte[] outRepBuff = new byte[dev.GetMaxOutputReportLength()];
-
-                        
-                        outRepBuff[0] = 0x00;
-                        outRepBuff[1] = 0x51;
-                        outRepBuff[2] = 0x53;
-                        outRepBuff[3] = 0x0d;
-                        alog("Sending data: " + ByteArrrayDump(outRepBuff));
-
-                        hs.Write(outRepBuff, 0, outRepBuff.Length);
-                        alog("Sent.");
-
-                        inpRecv.Start(hs);
-
-                        List<HidSharp.Reports.Report> respRep = new List<HidSharp.Reports.Report>();
-
-                        int start = Environment.TickCount;
-                        while(true)
-                        {
-                            //alog("LOOP...");
-                            if (inpRecv.WaitHandle.WaitOne(1000))
-                            {
-                                //alog("LOOP:WAINT-ONE...");
-                                if (!inpRecv.IsRunning) break;
-
-                                //alog("LOOP:IS-RUNNING...");
-                                HidSharp.Reports.Report rep;
-                                while(inpRecv.TryRead(inRepBuff, 0, out rep))
-                                {
-                                    alog("Got report: " + ByteArrrayDump(inRepBuff));
-                                    //respRep.Add(rep);
-                                }
-                            }
-
-                            uint etime = (uint)(Environment.TickCount - start);
-                            if (etime > 1000) { break; }
-                        }
-
-                        //foreach(HidSharp.Reports.Report r in respRep)
-                        //{
-                            //r.Write()
-                            //alog("Report len=" + r.Length.ToString());
-                        //}
-
-                    }
-                }
-            } else
-            {
-                alog("Nope to open. :/");
-            }*/
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void bCommandF_Click(object sender, EventArgs e)
         {
             string cmd = "F";
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void bCmdQI_Click(object sender, EventArgs e)
         {
             string cmd = "QI";
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void bCmdT_Click(object sender, EventArgs e)
@@ -511,28 +445,28 @@ namespace UPSCommTest
             string cmd = "T";
             alog("Testing UPS (10sec test)...");
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void bCmdQ_Click(object sender, EventArgs e)
         {
             string cmd = "Q";
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void bCmdM_Click(object sender, EventArgs e)
         {
             string cmd = "M";
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void bCmdC_Click(object sender, EventArgs e)
         {
             string cmd = "C";
             string re = QueryUPS(cmd);
-            alog(">> " + cmd + " << «" + re + "»");
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
 
         private void eLog_KeyDown(object sender, KeyEventArgs e)
@@ -541,6 +475,38 @@ namespace UPSCommTest
             {
                 eLog.Clear();
             }
+        }
+
+        private void bCmdSdot3R0001_Click(object sender, EventArgs e)
+        {
+            string cmd = "S.3R0001";
+            string re = QueryUPS(cmd);
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
+        }
+
+        private void bCmdS01R0001_Click(object sender, EventArgs e)
+        {
+            string cmd = "S01R0001";
+            string re = QueryUPS(cmd);
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
+        }
+
+        private void bCmdSdot3R0000_Click(object sender, EventArgs e)
+        {
+            string cmd = "S01R0000";
+            string re = QueryUPS(cmd);
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
+        }
+
+        private void bCmdS00R0000_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("This command will instantly KILL power on UPS OUTPUT, are you sure?","Warning!", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+            {
+                return;
+            }
+            string cmd = "S00R0000";
+            string re = QueryUPS(cmd);
+            alog("CMD:>> " + cmd + " << RE:«" + re + "»");
         }
     }
 }

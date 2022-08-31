@@ -47,6 +47,10 @@
             this.bSendCMD = new System.Windows.Forms.Button();
             this.cbHexDumps = new System.Windows.Forms.CheckBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.bCmdSdot3R0001 = new System.Windows.Forms.Button();
+            this.bCmdS01R0001 = new System.Windows.Forms.Button();
+            this.bCmdSdot3R0000 = new System.Windows.Forms.Button();
+            this.bCmdS00R0000 = new System.Windows.Forms.Button();
             this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -152,6 +156,10 @@
             this.flowLayoutPanel1.Controls.Add(this.bCmdQ);
             this.flowLayoutPanel1.Controls.Add(this.bCmdM);
             this.flowLayoutPanel1.Controls.Add(this.bCmdC);
+            this.flowLayoutPanel1.Controls.Add(this.bCmdSdot3R0001);
+            this.flowLayoutPanel1.Controls.Add(this.bCmdS01R0001);
+            this.flowLayoutPanel1.Controls.Add(this.bCmdSdot3R0000);
+            this.flowLayoutPanel1.Controls.Add(this.bCmdS00R0000);
             this.flowLayoutPanel1.Location = new System.Drawing.Point(12, 6);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
             this.flowLayoutPanel1.Size = new System.Drawing.Size(735, 64);
@@ -243,6 +251,52 @@
             this.cbHexDumps.Text = "HEX-DUMPS";
             this.cbHexDumps.UseVisualStyleBackColor = true;
             // 
+            // bCmdSdot3R0001
+            // 
+            this.bCmdSdot3R0001.Location = new System.Drawing.Point(246, 32);
+            this.bCmdSdot3R0001.Name = "bCmdSdot3R0001";
+            this.bCmdSdot3R0001.Size = new System.Drawing.Size(100, 23);
+            this.bCmdSdot3R0001.TabIndex = 11;
+            this.bCmdSdot3R0001.Text = "CMD: S.3R0001";
+            this.toolTip1.SetToolTip(this.bCmdSdot3R0001, "Shutdown after 18sec (0.3*1min=18sec), \r\nand restore power after 1min");
+            this.bCmdSdot3R0001.UseVisualStyleBackColor = true;
+            this.bCmdSdot3R0001.Click += new System.EventHandler(this.bCmdSdot3R0001_Click);
+            // 
+            // bCmdS01R0001
+            // 
+            this.bCmdS01R0001.Location = new System.Drawing.Point(352, 32);
+            this.bCmdS01R0001.Name = "bCmdS01R0001";
+            this.bCmdS01R0001.Size = new System.Drawing.Size(100, 23);
+            this.bCmdS01R0001.TabIndex = 12;
+            this.bCmdS01R0001.Text = "CMD: S01R0001";
+            this.toolTip1.SetToolTip(this.bCmdS01R0001, "Shutdown after 1min, \r\nand restore power after 1min");
+            this.bCmdS01R0001.UseVisualStyleBackColor = true;
+            this.bCmdS01R0001.Click += new System.EventHandler(this.bCmdS01R0001_Click);
+            // 
+            // bCmdSdot3R0000
+            // 
+            this.bCmdSdot3R0000.Location = new System.Drawing.Point(458, 32);
+            this.bCmdSdot3R0000.Name = "bCmdSdot3R0000";
+            this.bCmdSdot3R0000.Size = new System.Drawing.Size(100, 23);
+            this.bCmdSdot3R0000.TabIndex = 13;
+            this.bCmdSdot3R0000.Text = "CMD: S.3R0000";
+            this.toolTip1.SetToolTip(this.bCmdSdot3R0000, "Shutdown after 18sec (0,3*1min=18sec).\r\nNo restore power.\r\n(Use C-Cancel to resto" +
+        "re power)");
+            this.bCmdSdot3R0000.UseVisualStyleBackColor = true;
+            this.bCmdSdot3R0000.Click += new System.EventHandler(this.bCmdSdot3R0000_Click);
+            // 
+            // bCmdS00R0000
+            // 
+            this.bCmdS00R0000.Location = new System.Drawing.Point(564, 32);
+            this.bCmdS00R0000.Name = "bCmdS00R0000";
+            this.bCmdS00R0000.Size = new System.Drawing.Size(100, 23);
+            this.bCmdS00R0000.TabIndex = 14;
+            this.bCmdS00R0000.Text = "CMD: S00R0000";
+            this.toolTip1.SetToolTip(this.bCmdS00R0000, "Instant shutdown output power.\r\nNo restore power.\r\n(Use C-Cancel to restore power" +
+        ")");
+            this.bCmdS00R0000.UseVisualStyleBackColor = true;
+            this.bCmdS00R0000.Click += new System.EventHandler(this.bCmdS00R0000_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -282,6 +336,10 @@
         private System.Windows.Forms.Button bCmdQ;
         private System.Windows.Forms.Button bCmdM;
         private System.Windows.Forms.Button bCmdC;
+        private System.Windows.Forms.Button bCmdSdot3R0001;
+        private System.Windows.Forms.Button bCmdS01R0001;
+        private System.Windows.Forms.Button bCmdSdot3R0000;
+        private System.Windows.Forms.Button bCmdS00R0000;
     }
 }
 
